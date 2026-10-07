@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: make test
-      - run: VERSION=ci ./hack/krew-local.sh
+      - run: VERSION=0.0.0-ci ./hack/krew-local.sh
       - name: validate krew manifest
         run: |
           set -e
