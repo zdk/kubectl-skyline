@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>kubectl skyline · list</title>
+<link rel="stylesheet" href="/style.css">
+<script type="module" src="/list.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">kubectl skyline<span>v{{VERSION}}</span></a>
+  <span class="ctx"><span class="status-dot" id="dot"></span>context <b id="context">…</b></span>
+  <nav class="nav"><a href="/">Space</a><a href="/list" class="active">List</a><a href="https://github.com/zdk/kubectl-skyline" target="_blank" rel="noopener">GitHub</a></nav>
+</header>
+<main class="page">
+  <h1>Resources<span id="count"></span></h1>
+  <p class="sub">Every object kubectl skyline watches. Click a name to open its details, or the ◎ to fly to it in the space view.</p>
+  <div class="toolbar">
+    <input id="filter" type="search" placeholder="Filter by name, namespace, kind, status…" aria-label="Filter">
+    <select id="kind"><option value="">All kinds</option></select>
+    <select id="namespace"><option value="">All namespaces</option></select>
+    <label><input type="checkbox" id="problems"> only problems</label>
+  </div>
+  <table>
+    <thead><tr><th data-sort="kind">KIND</th><th data-sort="namespace">NAMESPACE</th><th data-sort="name">NAME</th><th data-sort="status">STATUS</th><th>SUMMARY</th><th data-sort="created">AGE</th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</main>
+</body>
+</html>

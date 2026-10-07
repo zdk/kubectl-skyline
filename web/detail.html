@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>kubectl skyline · detail</title>
+<link rel="stylesheet" href="/style.css">
+<script type="module" src="/detail.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">kubectl skyline<span>v{{VERSION}}</span></a>
+  <span class="ctx"><span class="status-dot" id="dot"></span>context <b id="context">…</b></span>
+  <nav class="nav"><a href="/">Space</a><a href="/list">List</a><a id="focus" href="/">Show in space ◎</a></nav>
+</header>
+<main class="page">
+  <div class="eyebrow" id="kind">OBJECT</div>
+  <h1 id="name">…<span id="phase"></span></h1>
+  <p class="sub" id="meta"></p>
+  <div class="cols">
+    <div>
+      <div class="card"><h3>SUMMARY</h3><p id="summary"></p><dl class="facts" id="facts"></dl></div>
+      <div class="card" id="containers-card" hidden><h3>CONTAINERS</h3><div id="containers"></div></div>
+      <div class="card events"><h3>EVENTS</h3><ul id="events"></ul></div>
+    </div>
+    <div>
+      <div class="card" id="logs-card" hidden><h3>LOGS <span id="log-meta"></span></h3><div class="tabs" id="log-tabs"></div><pre id="logs">loading…</pre></div>
+      <div class="card"><h3>YAML</h3><pre id="yaml">loading…</pre></div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

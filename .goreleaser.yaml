@@ -1,0 +1,70 @@
+version: 2
+project_name: kubectl-skyline
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: kubectl-skyline
+    main: ./cmd/kubectl-skyline
+    binary: kubectl-skyline
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc
+
+release:
+  github:
+    owner: zdk
+    name: kubectl-skyline
+  extra_files:
+    - glob: dist/krew/skyline.yaml
+
+krews:
+  - name: skyline
+    ids: [default]
+    homepage: https://github.com/zdk/kubectl-skyline
+    short_description: Explore the cluster as an interactive 3D space
+    description: |
+      kubectl skyline starts a local web server and renders the cluster as an
+      explorable 3D space: namespaces as floor plates, workloads and pods as
+      wireframe towers with container layers, services and ingresses as
+      floating markers, live events as sparks. Read-only; listens on loopback.
+    caveats: |
+      Needs a browser and a kubeconfig with list/watch access to pods,
+      workloads, services, ingresses, configmaps, secrets (metadata only), pvcs,
+      nodes, namespaces and events.
+    repository:
+      owner: zdk
+      name: krew-index
+      branch: kubectl-skyline-{{ .Version }}
+      pull_request:
+        enabled: true
+        base:
+          owner: kubernetes-sigs
+          name: krew-index
+          branch: master
+    commit_author:
+      name: zdk
+      email: di.warachet@gmail.com
+    skip_upload: auto

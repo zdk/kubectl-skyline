@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>kubectl skyline</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/space.css">
+<script type="module" src="/space.js"></script>
+</head>
+<body>
+<canvas id="world" aria-label="3D cluster space"></canvas>
+<canvas id="labels" aria-hidden="true"></canvas>
+<div class="vignette"></div>
+<header>
+  <a class="brand" href="/">kubectl skyline<span>v{{VERSION}}</span></a>
+  <span class="ctx"><span class="status-dot" id="dot"></span>context <b id="context">…</b></span>
+  <span class="help">DRAG · ORBIT　 RIGHT DRAG · PAN　 SCROLL · ZOOM　 CLICK · SELECT　 ESC · CLEAR <span id="fps"></span></span>
+  <nav class="nav"><a href="/" class="active">Space</a><a href="/list">List</a><a href="https://github.com/zdk/kubectl-skyline" target="_blank" rel="noopener">GitHub</a></nav>
+</header>
+<div class="left-hud">
+  <div class="counts">
+    <div><strong id="c-pods">0</strong><span>PODS</span></div>
+    <div><strong id="c-work">0</strong><span>WORKLOADS</span></div>
+    <div><strong id="c-svc">0</strong><span>SERVICES</span></div>
+    <div><strong id="c-ns">0</strong><span>NAMESPACES</span></div>
+    <div><strong id="c-nodes">0</strong><span>NODES</span></div>
+  </div>
+  <nav class="tools">
+    <input id="search" type="search" placeholder="Find pod / name…" aria-label="Find object">
+    <select id="namespace" aria-label="Namespace filter"><option value="">All namespaces</option></select>
+    <button id="fit">Fit all</button>
+    <div class="kinds" id="kinds"></div>
+  </nav>
+</div>
+<aside id="details" hidden>
+  <button id="close" aria-label="Clear selection">×</button>
+  <div class="eyebrow" id="d-kind">SELECTED</div>
+  <h2 id="d-name"></h2>
+  <p class="meta" id="d-meta"></p>
+  <span class="pill phase" id="d-phase"></span>
+  <p class="summary" id="d-summary"></p>
+  <dl class="facts" id="d-facts"></dl>
+  <div id="d-containers"></div>
+  <a class="open" id="d-open" target="_blank">Open details ↗</a>
+  <div class="sub"><div class="eyebrow">RELATED</div><div class="related" id="d-related"></div></div>
+  <div class="sub" id="d-labels-wrap"><div class="eyebrow">LABELS</div><div class="labels-row" id="d-labels"></div></div>
+</aside>
+<div id="hover" hidden></div>
+<div id="failure" role="alert" hidden></div>
+<footer>
+  <div id="legend"></div>
+  <div id="ticker"></div>
+</footer>
+</body>
+</html>

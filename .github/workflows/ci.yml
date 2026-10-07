@@ -1,0 +1,22 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: make test
+      - run: VERSION=ci ./hack/krew-local.sh
+      - name: validate krew manifest
+        run: |
+          set -e
+          curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_amd64.tar.gz | tar xz
+          ./krew-linux_amd64 install --manifest=dist/skyline.yaml --archive=dist/kubectl-skyline_linux_amd64.tar.gz
+          "$HOME/.krew/bin/kubectl-skyline" --version
