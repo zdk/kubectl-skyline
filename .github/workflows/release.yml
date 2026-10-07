@@ -19,4 +19,3 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KREW_GITHUB_TOKEN: ${{ secrets.KREW_GITHUB_TOKEN }}

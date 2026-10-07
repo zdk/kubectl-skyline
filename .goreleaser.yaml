@@ -57,14 +57,4 @@ krews:
     repository:
       owner: zdk
       name: krew-index
-      branch: kubectl-skyline-{{ .Version }}
-      pull_request:
-        enabled: true
-        base:
-          owner: kubernetes-sigs
-          name: krew-index
-          branch: master
-    commit_author:
-      name: zdk
-      email: di.warachet@gmail.com
-    skip_upload: auto
+    skip_upload: true
