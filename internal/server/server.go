@@ -43,6 +43,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/events", s.events)
 	mux.HandleFunc("GET /api/resource", s.resource)
 	mux.HandleFunc("GET /api/object-events", s.objectEvents)
+	mux.HandleFunc("GET /api/revisions", s.revisions)
 	mux.HandleFunc("GET /api/logs", s.logs)
 	return mux
 }
@@ -117,6 +118,12 @@ func (s *Server) resource(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "not found", 404)
 		return
 	}
+	if r.URL.Query().Get("prev") != "" {
+		if obj = s.watcher.Previous(obj); obj == nil {
+			http.Error(w, "no change seen yet", 404)
+			return
+		}
+	}
 	obj = obj.DeepCopyObject()
 	if acc, err := metaAccessor(obj); err == nil {
 		acc.SetManagedFields(nil)
@@ -149,6 +156,21 @@ func (s *Server) objectEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
 	json.NewEncoder(w).Encode(evs)
+}
+
+func (s *Server) revisions(w http.ResponseWriter, r *http.Request) {
+	_, ns, name, ok := parseID(r.URL.Query().Get("id"))
+	if !ok {
+		http.Error(w, "bad id", 400)
+		return
+	}
+	revs := s.watcher.Revisions(ns, name)
+	if revs == nil {
+		revs = []cluster.Revision{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	json.NewEncoder(w).Encode(revs)
 }
 
 func (s *Server) logs(w http.ResponseWriter, r *http.Request) {

@@ -40,6 +40,45 @@ export function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+function containerStatus(c) {
+  if (c.state === "running") return c.ready ? "ok" : "warn";
+  if (c.state === "terminated") return c.reason === "Completed" || c.init ? "done" : "error";
+  return /BackOff|Err/.test(c.reason || "") ? "error" : "warn";
+}
+
+// One dot per container for a Pod, otherwise one dot for the object's status.
+export function statusDots(n) {
+  const cs = n.containers || [];
+  if (n.kind !== "Pod" || !cs.length) return `<span class="st-${esc(n.status)}" title="${esc(n.status)}">●</span>`;
+  return cs.map((c) => `<span class="st-${containerStatus(c)}" title="${esc(c.name)} · ${esc(c.state)}${c.reason ? ` (${esc(c.reason)})` : ""}">●</span>`).join("");
+}
+
+// Colours keys, quoted strings, and numbers/booleans in escaped YAML.
+export function yamlHTML(text) {
+  return esc(text).replace(/^(\s*(?:- )*)([\w.\-\/]+):(.*)$/gm, (m, indent, key, rest) => {
+    const v = rest.trim();
+    const cls = /^(&quot;|&#39;)/.test(v) ? "s" : /^(true|false|null|-?\d+(\.\d+)?)$/.test(v) ? "n" : "";
+    return `${indent}<span class="k">${key}</span>:` + (cls ? ` <span class="${cls}">${v}</span>` : rest);
+  });
+}
+
+// ponytail: plain LCS line diff, O(n*m) memory; swap for Myers if objects get huge
+export function diffLines(a, b) {
+  const n = a.length, m = b.length, w = m + 1;
+  const t = new Uint32Array((n + 1) * w);
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--)
+      t[i * w + j] = a[i] === b[j] ? t[(i + 1) * w + j + 1] + 1 : Math.max(t[(i + 1) * w + j], t[i * w + j + 1]);
+  const out = [];
+  let i = 0, j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && a[i] === b[j]) { out.push([" ", a[i]]); i++; j++; }
+    else if (j < m && (i === n || t[i * w + j + 1] > t[(i + 1) * w + j])) out.push(["+", b[j++]]);
+    else out.push(["-", a[i++]]);
+  }
+  return out;
+}
+
 export const parseId = (id) => {
   const [kind, namespace, name] = id.split("/");
   return { kind, namespace, name };
@@ -47,14 +86,19 @@ export const parseId = (id) => {
 export const detailURL = (id) => `/detail?id=${encodeURIComponent(id)}`;
 export const focusURL = (id) => `/?focus=${encodeURIComponent(id)}`;
 
+// Browsers allow six connections per host, so hidden tabs give up their stream.
 export function connect(handlers) {
-  const es = new EventSource("/api/events");
-  es.addEventListener("snapshot", (e) => handlers.snapshot?.(JSON.parse(e.data)));
-  es.addEventListener("event", (e) => handlers.event?.(JSON.parse(e.data)));
-  es.addEventListener("metrics", (e) => handlers.metrics?.(JSON.parse(e.data)));
-  es.onopen = () => handlers.status?.("live");
-  es.onerror = () => handlers.status?.("reconnecting");
-  return es;
+  let es;
+  const open = () => {
+    es = new EventSource("/api/events");
+    es.addEventListener("snapshot", (e) => handlers.snapshot?.(JSON.parse(e.data)));
+    es.addEventListener("event", (e) => handlers.event?.(JSON.parse(e.data)));
+    es.addEventListener("metrics", (e) => handlers.metrics?.(JSON.parse(e.data)));
+    es.onopen = () => handlers.status?.("live");
+    es.onerror = () => handlers.status?.("reconnecting");
+  };
+  document.addEventListener("visibilitychange", () => { es?.close(); if (!document.hidden) open(); });
+  if (!document.hidden) open();
 }
 
 export function containerColor(c) {

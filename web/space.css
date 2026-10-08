@@ -12,6 +12,7 @@ body{overflow:hidden}
 .kinds label{display:flex;align-items:center;gap:0;cursor:pointer;white-space:nowrap}
 .kinds b{display:inline-block;width:14px;margin-right:4px;font-weight:normal;font-size:11px;text-align:center;text-shadow:0 0 6px currentColor}
 .kinds .wide{grid-column:1/3;border-top:1px solid #16332e;padding-top:5px;margin-top:3px}
+.kinds .all{border-top:0;border-bottom:1px solid #16332e;padding:0 0 5px;margin:0 0 3px}
 aside{position:fixed;right:28px;top:58px;bottom:44px;width:320px;padding:20px;z-index:3;background:#051117ed;border:1px solid #30595288;border-top:2px solid #61d9bb;backdrop-filter:blur(15px);overflow:auto}
 aside h2{font-size:21px;color:#b5f9e1;overflow-wrap:anywhere;margin:0 0 4px;font-weight:600}
 aside .meta{color:#819b9f;margin:0 0 12px}
@@ -31,7 +32,12 @@ aside .facts{margin-bottom:6px}
 footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;gap:20px;padding:12px 30px;background:#040c1299;border-top:1px solid #29423a55;color:#799692;font-size:9px;letter-spacing:1px;z-index:3;white-space:nowrap;overflow:hidden}
 footer i{display:inline-block;width:5px;height:5px;margin:0 5px 1px 10px;box-shadow:0 0 6px currentColor}footer i.line{width:14px;height:2px;margin-bottom:2px}footer .sep{display:inline-block;width:1px;height:10px;background:#29423a;margin:0 4px 0 14px;vertical-align:-1px}
 footer #ticker{min-width:0;overflow:hidden;text-overflow:ellipsis;color:#a9cbc5;letter-spacing:0}
-footer #ticker.Warning{color:#ffb089}
+footer #ticker{text-decoration:none}
+footer #ticker.Warning,#recent a.Warning{color:#ffb089}
+#recent{display:none;position:fixed;right:0;bottom:36px;width:min(760px,100vw);max-height:50vh;overflow:auto;padding:8px 0;background:#05141ef2;border:1px solid #32645a;font-size:10px;z-index:4}
+#recent a{display:block;padding:4px 14px;color:#a9cbc5;text-decoration:none;overflow-wrap:anywhere}
+#recent a:hover{background:#0b2a30}
+footer:has(#ticker:hover)+#recent:not(:empty),#recent:hover{display:block}
 @media(max-width:900px){header .help{display:none}}
 @media(max-width:750px){header{padding:0 10px;gap:8px}.left-hud{left:16px;top:58px;width:170px}aside{right:10px;top:52px;width:260px}.counts{gap:10px}.counts strong{font-size:17px}footer{padding:10px 15px}footer>div:last-child{display:none}}
 @media(prefers-reduced-motion:reduce){.vignette{box-shadow:none}}

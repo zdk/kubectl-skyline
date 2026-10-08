@@ -70,3 +70,19 @@ test("layout is deterministic and stable across identical snapshots", () => {
   const a = layout(snapshot, v), b = layout(snapshot, v);
   assert.deepEqual([...a.pos], [...b.pos]);
 });
+
+test("diffLines marks removed and added lines", async () => {
+  const { diffLines } = await import("../common.js");
+  const d = diffLines(["a", "replicas: 1", "c"], ["a", "replicas: 2", "c", "d"]);
+  assert.deepEqual(d.map(([op, l]) => op + l), [" a", "-replicas: 1", "+replicas: 2", " c", "+d"]);
+});
+
+test("statusDots gives one dot per pod container", async () => {
+  const { statusDots } = await import("../common.js");
+  const pod = { kind: "Pod", status: "error", containers: [
+    { name: "app", state: "running", ready: true },
+    { name: "side", state: "waiting", reason: "CrashLoopBackOff" },
+  ] };
+  assert.deepEqual([...statusDots(pod).matchAll(/st-(\w+)/g)].map((m) => m[1]), ["ok", "error"]);
+  assert.match(statusDots({ kind: "Service", status: "warn" }), /st-warn/);
+});

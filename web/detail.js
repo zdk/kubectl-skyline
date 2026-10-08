@@ -1,4 +1,4 @@
-import { SHORT, esc, age, connect, focusURL, parseId, containerColor, hex } from "./common.js";
+import { SHORT, esc, age, connect, focusURL, parseId, containerColor, hex, yamlHTML, diffLines, statusDots } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
 const id = new URLSearchParams(location.search).get("id") || "";
@@ -13,7 +13,7 @@ let logContainer = null, logTimer = null;
 function renderNode(n) {
   const ph = $("phase"); ph.textContent = n.phase || n.status; ph.className = "st-" + n.status;
   $("meta").innerHTML = `${namespace ? `namespace <b>${esc(namespace)}</b> · ` : ""}age ${age(n.created)}${n.clusterNode ? ` · node <b>${esc(n.clusterNode)}</b>` : ""} · uid ${esc(n.uid)}`;
-  $("summary").textContent = n.summary || "";
+  $("summary").innerHTML = `${statusDots(n)} ${esc(n.summary || n.phase || n.status)}`;
   $("facts").innerHTML = (n.facts || []).filter(([, v]) => v).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("") +
     Object.entries(n.labels || {}).map(([k, v]) => `<dt class="st-idle">label</dt><dd><code>${esc(k)}=${esc(v)}</code></dd>`).join("");
   const cs = n.containers || [];
@@ -49,9 +49,52 @@ async function loadLogs(previous = false) {
   if (!previous) logTimer = setTimeout(loadLogs, 5000);
 }
 async function loadYAML() {
-  const r = await fetch(`/api/resource?id=${encodeURIComponent(id)}`);
+  const url = `/api/resource?id=${encodeURIComponent(id)}`;
+  const [r, p] = await Promise.all([fetch(url), fetch(url + "&prev=1")]);
   const text = await r.text();
-  $("yaml").innerHTML = r.ok ? esc(text).replace(/^(\s*[\w.\-\/]+):/gm, '<span class="k">$1</span>:') : "error: " + esc(text);
+  $("yaml").innerHTML = r.ok ? yamlHTML(text) : "error: " + esc(text);
+  $("diff-card").hidden = !(r.ok && p.ok);
+  if (r.ok && p.ok) renderDiff(await p.text(), text, $("diff"), "only resourceVersion or heartbeat changed");
+}
+$("copy-yaml").onclick = async (e) => {
+  await navigator.clipboard.writeText($("yaml").textContent);
+  e.target.textContent = "Copied";
+  setTimeout(() => { e.target.textContent = "Copy"; }, 1500);
+};
+let revs = [];
+async function loadRevisions() {
+  if (kind !== "Deployment") return;
+  const r = await fetch(`/api/revisions?id=${encodeURIComponent(id)}`);
+  const next = r.ok ? await r.json() : [];
+  // Same list as before: keep the revisions the user picked.
+  if (next.map((v) => v.number).join() === revs.map((v) => v.number).join()) return;
+  revs = next;
+  $("rev-card").hidden = revs.length < 2;
+  if (revs.length < 2) return;
+  $("rev-from").innerHTML = $("rev-to").innerHTML = revs.map((v) => `<option value="${v.number}">#${v.number} · ${esc(new Date(v.created).toLocaleString())}</option>`).join("");
+  $("rev-from").value = revs[1].number;
+  $("rev-to").value = revs[0].number;
+  showRevisionDiff();
+}
+function showRevisionDiff() {
+  const template = (el) => revs.find((v) => String(v.number) === $(el).value).template;
+  renderDiff(template("rev-from"), template("rev-to"), $("rev-diff"), "pod templates are identical");
+}
+$("rev-from").onchange = $("rev-to").onchange = showRevisionDiff;
+function renderDiff(before, after, el, empty) {
+  // resourceVersion and node heartbeats change constantly, so they are noise here.
+  const lines = (t) => t.split("\n").filter((l) => !/^\s*(- )?(resourceVersion|lastHeartbeatTime):/.test(l));
+  const d = diffLines(lines(before), lines(after));
+  // Keep two lines of context around each change.
+  const keep = d.map((_, i) => d.slice(Math.max(0, i - 2), i + 3).some(([op]) => op !== " "));
+  let html = "", gap = false;
+  d.forEach(([op, line], i) => {
+    if (!keep[i]) { gap = true; return; }
+    if (gap && html) html += `<span class="gap">⋯</span>\n`;
+    gap = false;
+    html += `<span class="${op === "+" ? "add" : op === "-" ? "del" : ""}">${op} ${esc(line)}</span>\n`;
+  });
+  el.innerHTML = html || empty;
 }
 async function loadEvents() {
   const r = await fetch(`/api/object-events?id=${encodeURIComponent(id)}`);
@@ -60,12 +103,13 @@ async function loadEvents() {
 }
 loadYAML();
 loadEvents();
+loadRevisions();
 connect({
   snapshot: (s) => {
     $("context").textContent = s.context || "(current)";
     const n = s.nodes.find((x) => x.id === id);
     if (n) renderNode(n); else { $("phase").textContent = "gone"; $("phase").className = "st-error"; }
-    loadYAML(); loadEvents();
+    loadYAML(); loadEvents(); loadRevisions();
   },
   status: (st) => $("dot").classList.toggle("off", st !== "live"),
 });

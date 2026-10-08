@@ -2,7 +2,7 @@ import * as T from "/vendor/three.module.js";
 import { OrbitControls } from "/vendor/OrbitControls.js";
 import { layout, visibleNodes, bounds, SHAPE, TILE_SHAPE, TREE_KINDS, TILE_KINDS } from "./layout.js";
 import {
-  STATUS_COLOR, KIND_COLOR, SHORT, KINDS, hex, nodeHue, hslToHex, age, esc, connect, containerColor, detailURL,
+  STATUS_COLOR, KIND_COLOR, SHORT, KINDS, hex, nodeHue, hslToHex, age, esc, connect, containerColor, detailURL, statusDots,
 } from "./common.js";
 
 const $ = (id) => {
@@ -571,7 +571,7 @@ function showDetails(id) {
   $("d-name").textContent = n.name;
   $("d-meta").innerHTML = (n.namespace ? `<a data-id="Namespace//${esc(n.namespace)}">ns ${esc(n.namespace)}</a> · ` : "") + `age ${age(n.created)}` + (n.clusterNode ? ` · <a data-id="Node//${esc(n.clusterNode)}">on ${esc(n.clusterNode)}</a>` : "");
   const ph = $("d-phase"); ph.textContent = n.phase || n.status; ph.className = "pill phase st-" + n.status; ph.style.borderColor = "currentColor";
-  $("d-summary").textContent = n.summary || "";
+  $("d-summary").innerHTML = `${statusDots(n)} ${esc(n.summary || "")}`;
   $("d-facts").innerHTML = (n.facts || []).filter(([, v]) => v).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   const cs = n.containers || [];
   $("d-containers").innerHTML = cs.length ? `<div class="sub"><div class="eyebrow">CONTAINERS</div>` + cs.map((c) => `<div class="ctr${c.name === pickedContainer ? " on" : ""}" data-c="${esc(c.name)}"><i style="color:${hex(containerColor(c))};background:${hex(containerColor(c))}"></i><b>${esc(c.name)}</b>${c.init ? " <span class=st-done>init</span>" : ""} · ${esc(c.state)}${c.reason ? " (" + esc(c.reason) + ")" : ""}${c.restarts ? ` · ${c.restarts} restarts` : ""}${c.cpuReq || c.memReq ? ` · req ${esc(c.cpuReq || "-")}/${esc(c.memReq || "-")}` : ""}<code>${esc(c.image)}</code></div>`).join("") + `</div>` : "";
@@ -621,11 +621,17 @@ function updateCounts() {
 }
 function buildKindToggles() {
   const box = $("kinds");
-  box.innerHTML = KINDS.map((k) => `<label title="${k}"><input type="checkbox" data-kind="${k}" checked><b style="color:${hex(KIND_COLOR[k])}">${GLYPH[k]}</b>${SHORT[k]}</label>`).join("") +
+  box.innerHTML = `<label class="wide all"><input type="checkbox" id="all-kinds" checked>all kinds</label>` + KINDS.map((k) => `<label title="${k}"><input type="checkbox" data-kind="${k}" checked><b style="color:${hex(KIND_COLOR[k])}">${GLYPH[k]}</b>${SHORT[k]}</label>`).join("") +
     `<label class="wide"><input type="checkbox" id="show-idle">idle replicasets</label><label class="wide" style="border:0;margin:0;padding:0"><input type="checkbox" id="show-unused">unused cm / secrets</label>`;
   box.addEventListener("change", (e) => {
     const t = e.target;
     if (t.dataset.kind) { t.checked ? hiddenKinds.delete(t.dataset.kind) : hiddenKinds.add(t.dataset.kind); }
+    if (t.id === "all-kinds") {
+      hiddenKinds.clear();
+      if (!t.checked) KINDS.forEach((k) => hiddenKinds.add(k));
+      box.querySelectorAll("[data-kind]").forEach((c) => { c.checked = t.checked; });
+    }
+    $("all-kinds").checked = hiddenKinds.size === 0;
     if (t.id === "show-idle") showIdle = t.checked;
     if (t.id === "show-unused") showUnused = t.checked;
     rebuild();
@@ -782,13 +788,22 @@ function drawLabels() {
   ctx2d.globalAlpha = 1;
 }
 
+// ponytail: last 30 events kept in memory only; add an API-backed page if history matters
+const recent = [];
+function eventText(ev) {
+  return `${new Date(ev.time).toLocaleTimeString()}  ${ev.type.toUpperCase()}  ${ev.reason}  ${ev.target.replace(/^(\w+)\/([^/]*)\//, (m, k, ns) => (SHORT[k] || k) + "/" + (ns ? ns + "/" : ""))}  —  ${ev.message}`;
+}
 function onEvent(ev) {
   const now = performance.now();
   const warn = ev.type === "Warning";
   glows.set(ev.target, { t0: now, warn });
   const t = $("ticker");
   t.className = ev.type;
-  t.textContent = `${new Date(ev.time).toLocaleTimeString()}  ${ev.type.toUpperCase()}  ${ev.reason}  ${ev.target.replace(/^(\w+)\/([^/]*)\//, (m, k, ns) => (SHORT[k] || k) + "/" + (ns ? ns + "/" : ""))}  —  ${ev.message}`;
+  t.textContent = eventText(ev);
+  t.href = detailURL(ev.target);
+  recent.unshift(ev);
+  recent.length = Math.min(recent.length, 30);
+  $("recent").innerHTML = recent.map((e) => `<a class="${esc(e.type)}" href="${esc(detailURL(e.target))}" target="_blank">${esc(eventText(e))}</a>`).join("");
   if (lay && lay.pos.has(ev.target) && !reduced) {
     const top = topOf(ev.target);
     spark(top, warn ? 0xff8a5a : 0xffffff, warn ? 10 : 4, now);

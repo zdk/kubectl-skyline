@@ -1,4 +1,4 @@
-import { KINDS, SHORT, esc, age, connect, detailURL, focusURL } from "./common.js";
+import { KINDS, SHORT, esc, age, connect, detailURL, focusURL, statusDots } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
 let snapshot = null, sortKey = "kind", sortDir = 1;
@@ -32,7 +32,7 @@ function render() {
     <td class="kind">${esc(SHORT[n.kind] || n.kind)}</td><td class="ns">${esc(n.namespace)}</td>
     <td><a href="${detailURL(n.id)}">${esc(n.name)}</a></td>
     <td><span class="pill st-${n.status}">${esc(n.phase || n.status)}</span></td>
-    <td>${esc(n.summary)}</td><td>${age(n.created)}</td>
+    <td>${n.kind === "Pod" ? statusDots(n) + " " : ""}${esc(n.summary)}</td><td>${age(n.created)}</td>
     <td><a href="${focusURL(n.id)}" title="Show in space">◎</a></td></tr>`).join("");
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	metricsclient "k8s.io/metrics/pkg/client/clientset/versioned"
+	"sigs.k8s.io/yaml"
 )
 
 type Watcher struct {
@@ -39,6 +41,8 @@ type Watcher struct {
 	subs  map[chan Message]struct{}
 
 	lister listers
+
+	previous sync.Map // UID -> object before its latest change
 }
 
 type listers struct {
@@ -169,8 +173,13 @@ func (w *Watcher) Run(ctx context.Context) error {
 
 	mark := cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(interface{}) { w.markDirty() },
-		UpdateFunc: func(_, _ interface{}) { w.markDirty() },
-		DeleteFunc: func(interface{}) { w.markDirty() },
+		UpdateFunc: func(old, cur interface{}) { w.keepPrevious(old, cur); w.markDirty() },
+		DeleteFunc: func(obj interface{}) {
+			if m, ok := obj.(metav1.Object); ok {
+				w.previous.Delete(m.GetUID())
+			}
+			w.markDirty()
+		},
 	}
 	for _, inf := range all {
 		if _, err := inf.AddEventHandler(mark); err != nil {
@@ -242,6 +251,29 @@ func (w *Watcher) Run(ctx context.Context) error {
 			w.rebuild()
 		}
 	}
+}
+
+// keepPrevious remembers the version before the latest change, so the UI can diff it.
+// The API server keeps no object history, so this only covers changes seen since startup.
+func (w *Watcher) keepPrevious(old, cur interface{}) {
+	o, ok1 := old.(metav1.Object)
+	c, ok2 := cur.(metav1.Object)
+	// Resyncs replay the same version.
+	if !ok1 || !ok2 || o.GetResourceVersion() == c.GetResourceVersion() {
+		return
+	}
+	w.previous.Store(c.GetUID(), old)
+}
+
+// Previous returns the version of obj before its latest change, or nil.
+func (w *Watcher) Previous(obj runtime.Object) runtime.Object {
+	m, ok := obj.(metav1.Object)
+	if !ok {
+		return nil
+	}
+	old, _ := w.previous.Load(m.GetUID())
+	prev, _ := old.(runtime.Object)
+	return prev
 }
 
 func (w *Watcher) markDirty() {
@@ -378,6 +410,43 @@ func (w *Watcher) Get(kind, namespace, name string) runtime.Object {
 		return ro
 	}
 	return nil
+}
+
+// Revision is one rollout of a Deployment.
+type Revision struct {
+	Number   int64     `json:"number"`
+	Created  time.Time `json:"created"`
+	Template string    `json:"template"`
+}
+
+// Revisions lists a Deployment's rollout history, newest first.
+// The cluster keeps it in the ReplicaSets the Deployment owns, so it survives restarts.
+func (w *Watcher) Revisions(namespace, name string) []Revision {
+	d, ok := w.Get("Deployment", namespace, name).(*appsv1.Deployment)
+	if !ok {
+		return nil
+	}
+	var out []Revision
+	for _, obj := range w.lister.replicasets.List() {
+		rs, ok := obj.(*appsv1.ReplicaSet)
+		if !ok || !metav1.IsControlledBy(rs, d) {
+			continue
+		}
+		n, err := strconv.ParseInt(rs.Annotations["deployment.kubernetes.io/revision"], 10, 64)
+		if err != nil {
+			continue
+		}
+		tpl := rs.Spec.Template.DeepCopy()
+		// The hash label differs on every revision, so it is noise in a diff.
+		delete(tpl.Labels, "pod-template-hash")
+		data, err := yaml.Marshal(tpl)
+		if err != nil {
+			continue
+		}
+		out = append(out, Revision{Number: n, Created: rs.CreationTimestamp.Time, Template: string(data)})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Number > out[j].Number })
+	return out
 }
 
 func nodeID(kind, namespace, name string) string {

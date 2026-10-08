@@ -25,7 +25,9 @@
     </div>
     <div>
       <div class="card" id="logs-card" hidden><h3>LOGS <span id="log-meta"></span></h3><div class="tabs" id="log-tabs"></div><pre id="logs">loading…</pre></div>
-      <div class="card"><h3>YAML</h3><pre id="yaml">loading…</pre></div>
+      <div class="card" id="diff-card" hidden><h3>LAST CHANGE <span id="diff-meta">since skyline started</span></h3><pre id="diff"></pre></div>
+      <div class="card" id="rev-card" hidden><h3>REVISIONS <span>pod template</span></h3><div class="tabs"><select id="rev-from" aria-label="From revision"></select><select id="rev-to" aria-label="To revision"></select></div><pre id="rev-diff"></pre></div>
+      <div class="card"><h3>YAML <button id="copy-yaml">Copy</button></h3><pre id="yaml">loading…</pre></div>
     </div>
   </div>
 </main>

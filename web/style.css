@@ -37,11 +37,14 @@ td.ns{color:#8fb0ac}
 .toolbar input[type=search]{width:280px}
 .toolbar label{color:#789b96;font-size:10px}
 pre{background:#05121a;border:1px solid #1b3733;padding:14px;overflow:auto;font-size:11px;line-height:1.5;color:#b9d6d2;max-height:70vh}
-pre .k{color:#6febc9}
+.card h3 button{float:right;margin-top:-4px;padding:3px 9px;font-size:9px;letter-spacing:1px;cursor:pointer}
+pre .k{color:#6febc9}pre .s{color:#e8c58a}pre .n{color:#8fb8ff}
+pre .add{color:#7ee0a8;background:#0c2a1c}pre .del{color:#ff8f9c;background:#2a1216}pre .gap{color:#4a6a72}
+pre .add,pre .del{display:inline-block;min-width:100%}
 .facts{display:grid;grid-template-columns:max-content 1fr;gap:4px 16px;font-size:11px}
 .facts dt{color:#64af9e;margin:0}
 .facts dd{margin:0;color:#c2dcd8;overflow-wrap:anywhere}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:26px}
 @media(max-width:900px){.cols{grid-template-columns:1fr}}
 .card{background:#051117cc;border:1px solid #1b3733;border-top:2px solid #61d9bb66;padding:16px;margin-bottom:18px}
 .card h3{margin:0 0 12px;font-size:10px;letter-spacing:3px;color:#72d6c3;font-weight:normal}
