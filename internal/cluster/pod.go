@@ -117,6 +117,7 @@ func fillPod(n *Node, p *corev1.Pod) {
 		}
 	}
 	hasRunning := false
+	mains := make([]Container, len(p.Spec.Containers))
 	for i := len(p.Spec.Containers) - 1; i >= 0; i-- {
 		c := p.Spec.Containers[i]
 		s := statusByName[c.Name]
@@ -124,7 +125,7 @@ func fillPod(n *Node, p *corev1.Pod) {
 		cs.CPUReq, cs.MemReq = quantityString(c.Resources.Requests.Cpu()), quantityString(c.Resources.Requests.Memory())
 		cs.State, cs.Reason = containerState(s)
 		restarts += s.RestartCount
-		n.Containers = append([]Container{cs}, n.Containers[len(p.Spec.InitContainers):]...)
+		mains[i] = cs
 		if s.Ready {
 			ready++
 		}
@@ -143,16 +144,7 @@ func fillPod(n *Node, p *corev1.Pod) {
 		}
 	}
 
-	inits := []Container{}
-	mains := []Container{}
-	for _, c := range n.Containers {
-		if c.Init {
-			inits = append(inits, c)
-		} else {
-			mains = append(mains, c)
-		}
-	}
-	n.Containers = append(inits, mains...)
+	n.Containers = append(n.Containers, mains...)
 
 	if reason == "Completed" && hasRunning {
 		if hasPodReadyCondition(p.Status.Conditions) {
