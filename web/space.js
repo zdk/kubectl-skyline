@@ -189,9 +189,9 @@ function rebuild() {
     fit();
     firstView = false;
     const focus = new URLSearchParams(location.search).get("focus");
-    if (focus && lay.byId.has(focus)) select(focus, true);
+    if (focus && nodeOf(focus)) select(focus, true);
   }
-  if (selected && !lay.byId.has(selected)) clearSelection();
+  if (selected && !nodeOf(selected)) clearSelection();
   else if (selected) { showDetails(selected); updateSelection(); }
 }
 
@@ -456,8 +456,9 @@ function updateSelection() {
   relationFlows = [];
   const active = new Set();
   const relations = [];
-  if (selected && lay?.byId.has(selected)) {
-    const n = lay.byId.get(selected), p = lay.pos.get(selected);
+  const hiddenPlate = selected?.startsWith("Namespace//") && lay?.ns.has(selected.slice(11));
+  if (selected && (lay?.byId.has(selected) || hiddenPlate)) {
+    const n = nodeOf(selected), p = lay.pos.get(selected);
     let geo;
     if (TREE_KINDS.has(n.kind)) {
       const s = shape(n); geo = new T.BoxGeometry(s.w + 0.4, s.w + 0.4, s.h + 0.4); dummy.position.set(p.x, p.y, s.h / 2);
@@ -527,6 +528,7 @@ function select(id, flyTo = false) {
   const [objId, container] = id.split("#");
   id = objId;
   pickedContainer = container || null;
+  if (!nodeOf(id)) return;
   selected = id;
   $("details").hidden = false;
   showDetails(id);
@@ -541,10 +543,12 @@ function clearSelection() {
   history.replaceState(null, "", "/");
 }
 function flyToObject(id) {
+  const n = nodeOf(id);
+  if (!n) return;
+  // A namespace plate is drawn even when the ns kind is hidden.
+  const big = (n.kind === "Namespace" && lay.ns.has(n.name)) || (n.kind === "Node" && lay.nodes.has(n.name));
   const t = topOf(id) || (lay.pos.get(id) && new T.Vector3().copy(lay.pos.get(id)));
-  if (!t) return;
-  const n = lay.byId.get(id);
-  const big = n.kind === "Namespace" || n.kind === "Node";
+  if (!t && !big) return;
   const target = big ? centerOf(n) : t.clone().setZ(t.z / 2);
   const dist = big ? Math.max(30, (n.kind === "Namespace" ? Math.max(lay.ns.get(n.name).w, lay.ns.get(n.name).h) : 16) * 1.3) : 22;
   const dir = new T.Vector3(0.45, -0.75, 0.55).normalize();
@@ -564,8 +568,10 @@ function fit() {
 }
 
 function kindOf(id) { return lay?.byId.get(id)?.kind || id.split("/")[0]; }
+// Hidden kinds are not in the layout, but links and namespace plates can still select them.
+const nodeOf = (id) => lay.byId.get(id) || snapshot.nodes.find((x) => x.id === id);
 function showDetails(id) {
-  const n = lay.byId.get(id);
+  const n = nodeOf(id);
   if (!n) return;
   $("d-kind").textContent = "SELECTED " + n.kind.replace(/([a-z])([A-Z])/g, "$1 $2").toUpperCase();
   $("d-name").textContent = n.name;
@@ -871,7 +877,8 @@ function frame(now) {
   pg.setDrawRange(0, i);
   pg.attributes.position.needsUpdate = true;
   pg.attributes.color.needsUpdate = true;
-  if (glowPlate && haloPlate) {
+  // With no towers, instanceColor is never created and the update below would throw.
+  if (glowPlate && haloPlate && towerIds.length) {
     for (let j = 0; j < towerIds.length; j++) {
       const { level, warn } = glowLevel(towerIds[j], now);
       if (warn) {
