@@ -86,3 +86,10 @@ test("statusDots gives one dot per pod container", async () => {
   assert.deepEqual([...statusDots(pod).matchAll(/st-(\w+)/g)].map((m) => m[1]), ["ok", "error"]);
   assert.match(statusDots({ kind: "Service", status: "warn" }), /st-warn/);
 });
+
+test("execCommandFor builds a pasteable kubectl exec", async () => {
+  const { execCommandFor } = await import("../common.js");
+  assert.equal(execCommandFor("prod", "shop", "web-1", "app"), "kubectl exec -it --context prod -n shop web-1 -c app -- sh");
+  assert.equal(execCommandFor("", "shop", "web-1", "app"), "kubectl exec -it -n shop web-1 -c app -- sh");
+  assert.match(execCommandFor("my ctx", "shop", "web-1", "app"), /--context 'my ctx' /);
+});

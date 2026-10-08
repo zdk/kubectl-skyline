@@ -59,4 +59,7 @@ pre .add,pre .del{display:inline-block;min-width:100%}
 .ctr b{font-weight:normal;color:#bedad5}
 .ctr i{display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:1px;box-shadow:0 0 6px currentColor}
 .ctr code{display:block;font-size:9px;color:#668b89;margin-top:3px;overflow-wrap:anywhere}
+.ctr .exec{display:flex;gap:8px;align-items:center;margin-top:6px}
+.ctr .exec code{flex:1;margin:0;color:#9fc9c2;user-select:all}
+.ctr .exec button{padding:2px 8px;font-size:9px;cursor:pointer}
 .ctr.on{background:#0b2228;outline:1px solid #2f6a60;outline-offset:2px}

@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth" // OIDC and other auth providers
 	metricsclient "k8s.io/metrics/pkg/client/clientset/versioned"
 
 	"github.com/zdk/kubectl-skyline/internal/cluster"
@@ -47,6 +48,7 @@ Flags:
 	noOpen := flags.Bool("no-open", false, "do not open the browser automatically")
 	noMetrics := flags.Bool("no-metrics", false, "do not poll metrics.k8s.io for CPU/memory glow")
 	showVersion := flags.Bool("version", false, "print version and exit")
+	allNamespaces := flags.BoolP("all-namespaces", "A", false, "show all namespaces (the default); overrides -n")
 	cfg := genericclioptions.NewConfigFlags(true)
 	cfg.AddFlags(flags)
 	flags.Parse(os.Args[1:])
@@ -87,7 +89,7 @@ Flags:
 		kubeContext = *cfg.Context
 	}
 	namespace := ""
-	if cfg.Namespace != nil {
+	if cfg.Namespace != nil && !*allNamespaces {
 		namespace = *cfg.Namespace
 	}
 

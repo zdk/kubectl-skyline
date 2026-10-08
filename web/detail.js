@@ -1,4 +1,4 @@
-import { SHORT, esc, age, connect, focusURL, parseId, containerColor, hex, yamlHTML, diffLines, statusDots } from "./common.js";
+import { SHORT, esc, age, connect, focusURL, parseId, containerColor, hex, yamlHTML, diffLines, statusDots, execCommandFor } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
 const id = new URLSearchParams(location.search).get("id") || "";
@@ -18,7 +18,7 @@ function renderNode(n) {
     Object.entries(n.labels || {}).map(([k, v]) => `<dt class="st-idle">label</dt><dd><code>${esc(k)}=${esc(v)}</code></dd>`).join("");
   const cs = n.containers || [];
   $("containers-card").hidden = !cs.length;
-  $("containers").innerHTML = cs.map((c) => `<div class="ctr"><i style="color:${hex(containerColor(c))};background:${hex(containerColor(c))}"></i><b>${esc(c.name)}</b>${c.init ? " <span class=st-done>init</span>" : ""} · ${esc(c.state)}${c.reason ? " (" + esc(c.reason) + ")" : ""} · ${c.restarts} restarts${c.cpuReq || c.memReq ? ` · requests ${esc(c.cpuReq || "-")} / ${esc(c.memReq || "-")}` : ""}<code>${esc(c.image)}</code></div>`).join("");
+  $("containers").innerHTML = cs.map((c) => `<div class="ctr"><i style="color:${hex(containerColor(c))};background:${hex(containerColor(c))}"></i><b>${esc(c.name)}</b>${c.init ? " <span class=st-done>init</span>" : ""} · ${esc(c.state)}${c.reason ? " (" + esc(c.reason) + ")" : ""} · ${c.restarts} restarts${c.cpuReq || c.memReq ? ` · requests ${esc(c.cpuReq || "-")} / ${esc(c.memReq || "-")}` : ""}<code>${esc(c.image)}</code>${kind === "Pod" && c.state === "running" ? `<span class="exec"><code>${esc(execCommand(c))}</code><button data-copy="${esc(execCommand(c))}">Copy</button></span>` : ""}</div>`).join("");
   if (kind === "Pod" && cs.length) {
     $("logs-card").hidden = false;
     if (!logContainer) logContainer = (cs.find((c) => !c.init) || cs[0]).name;
@@ -56,11 +56,19 @@ async function loadYAML() {
   $("diff-card").hidden = !(r.ok && p.ok);
   if (r.ok && p.ok) renderDiff(await p.text(), text, $("diff"), "only resourceVersion or heartbeat changed");
 }
-$("copy-yaml").onclick = async (e) => {
-  await navigator.clipboard.writeText($("yaml").textContent);
-  e.target.textContent = "Copied";
-  setTimeout(() => { e.target.textContent = "Copy"; }, 1500);
-};
+async function copy(button, text) {
+  await navigator.clipboard.writeText(text);
+  button.textContent = "Copied";
+  setTimeout(() => { button.textContent = "Copy"; }, 1500);
+}
+$("copy-yaml").onclick = (e) => copy(e.target, $("yaml").textContent);
+$("containers").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-copy]");
+  if (b) copy(b, b.dataset.copy);
+});
+// Skyline stays read-only: it shows the command, the user runs it in their own terminal.
+let kubeContext = "";
+const execCommand = (c) => execCommandFor(kubeContext, namespace, name, c.name);
 let revs = [];
 async function loadRevisions() {
   if (kind !== "Deployment") return;
@@ -107,6 +115,7 @@ loadRevisions();
 connect({
   snapshot: (s) => {
     $("context").textContent = s.context || "(current)";
+    kubeContext = s.context || "";
     const n = s.nodes.find((x) => x.id === id);
     if (n) renderNode(n); else { $("phase").textContent = "gone"; $("phase").className = "st-error"; }
     loadYAML(); loadEvents(); loadRevisions();

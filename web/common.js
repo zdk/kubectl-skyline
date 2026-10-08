@@ -40,6 +40,11 @@ export function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+export function execCommandFor(context, namespace, pod, container) {
+  const quote = (s) => (/^[\w.@:\/-]+$/.test(s) ? s : `'${s.replace(/'/g, `'\\''`)}'`);
+  return `kubectl exec -it${context ? ` --context ${quote(context)}` : ""} -n ${namespace} ${pod} -c ${container} -- sh`;
+}
+
 function containerStatus(c) {
   if (c.state === "running") return c.ready ? "ok" : "warn";
   if (c.state === "terminated") return c.reason === "Completed" || c.init ? "done" : "error";
