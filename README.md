@@ -7,30 +7,26 @@ A `kubectl` plugin that shows your cluster as a 3D city in the browser.
 - **Services and ingresses** float above the pods they route to.
 - **Live events** spark from the objects they touch.
 
-Click anything to see its relationships, YAML, events and logs.
+Click any object to see its relationships, YAML, events and logs.
 
-It is read-only and listens on loopback only.
+It is read-only.
 
 ![kubectl skyline](docs/skyline.png)
 
 ## Install
 
-The install script is the recommended way. It works on macOS and Linux.
-
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zdk/kubectl-skyline/main/install.sh | sh
 ```
 
-It installs the latest release and verifies its checksum.
-
-You can change what it does with two variables:
+set the following variables to custom version and installation path:
 
 | Variable      | What it does              | Default                               |
 | ------------- | ------------------------- | ------------------------------------- |
 | `VERSION`     | Pin a release             | latest                                |
 | `INSTALL_DIR` | Where the binary is saved | `/usr/local/bin`, else `~/.local/bin` |
 
-Set them on `sh`, not on `curl`:
+e.g.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zdk/kubectl-skyline/main/install.sh | VERSION=v0.1.4 sh
@@ -59,8 +55,8 @@ go install github.com/zdk/kubectl-skyline/cmd/kubectl-skyline@latest
 ## Run
 
 ```sh
-kubectl skyline              # current context, all namespaces, opens the browser
-kubectl skyline -n shop      # one namespace; --context and other kubectl flags work too
+kubectl skyline              # on current context, all namespaces, opens the browser
+kubectl skyline -n shop      # on one namespace; --context and other kubectl flags work too
 ```
 
 Drag to orbit, right-drag to pan, scroll to zoom, click to select, `/` to search, `f` to fit all.
