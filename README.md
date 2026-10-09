@@ -11,6 +11,15 @@ Read-only, loopback only.
 ## Install
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/zdk/kubectl-skyline/main/install.sh | sh
+```
+
+This installs the latest release for macOS or Linux and verifies its checksum.
+Set `VERSION=v0.1.4` to pin a release, or `INSTALL_DIR` to choose where it goes.
+
+Or with krew:
+
+```sh
 kubectl krew install skyline
 ```
 
