@@ -15,7 +15,15 @@ curl -fsSL https://raw.githubusercontent.com/zdk/kubectl-skyline/main/install.sh
 ```
 
 This installs the latest release for macOS or Linux and verifies its checksum.
-Set `VERSION=v0.1.4` to pin a release, or `INSTALL_DIR` to choose where it goes.
+
+| Variable      | What it does              | Default                                |
+| ------------- | ------------------------- | -------------------------------------- |
+| `VERSION`     | Pin a release             | latest                                 |
+| `INSTALL_DIR` | Where the binary is saved | `/usr/local/bin`, else `~/.local/bin`  |
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/zdk/kubectl-skyline/main/install.sh | VERSION=v0.1.4 sh
+```
 
 Or with Homebrew:
 
@@ -23,13 +31,7 @@ Or with Homebrew:
 brew install zdk/tools/kubectl-skyline
 ```
 
-Or with krew:
-
-```sh
-kubectl krew install skyline
-```
-
-Not in the krew index yet? Install from the latest release manifest:
+Or with krew, from the latest release manifest:
 
 ```sh
 kubectl krew install --manifest-url https://github.com/zdk/kubectl-skyline/releases/latest/download/skyline.yaml
