@@ -19,3 +19,18 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update Homebrew formula
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          # The release must not fail just because the tap token is missing.
+          if [ -z "$TAP_TOKEN" ]; then echo "TAP_TOKEN not set, skipping"; exit 0; fi
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/zdk/homebrew-tools.git" tap
+          ./hack/brew-formula.sh "$GITHUB_REF_NAME" > tap/Formula/kubectl-skyline.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # A re-run of the same tag has nothing to commit.
+          git diff --quiet && exit 0
+          git commit -am "kubectl-skyline ${GITHUB_REF_NAME#v}"
+          git push
