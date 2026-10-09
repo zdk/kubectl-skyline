@@ -1,43 +1,56 @@
 # kubectl skyline
 
-A `kubectl` plugin that renders your cluster as an explorable 3D city in the browser.
-Namespaces are floor plates, workloads and pods are glowing towers with one layer per
-container, services and ingresses float above the pods they route to, and live events spark
-from the objects they touch. Click anything for its relationships, YAML, events and logs.
-Read-only, loopback only.
+A `kubectl` plugin that shows your cluster as a 3D city in the browser.
+
+- **Namespaces** are floor plates.
+- **Workloads and pods** are glowing towers, with one layer per container.
+- **Services and ingresses** float above the pods they route to.
+- **Live events** spark from the objects they touch.
+
+Click anything to see its relationships, YAML, events and logs.
+
+It is read-only and listens on loopback only.
 
 ![kubectl skyline](docs/skyline.png)
 
 ## Install
 
+The install script is the recommended way. It works on macOS and Linux.
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zdk/kubectl-skyline/main/install.sh | sh
 ```
 
-This installs the latest release for macOS or Linux and verifies its checksum.
+It installs the latest release and verifies its checksum.
 
-| Variable      | What it does              | Default                                |
-| ------------- | ------------------------- | -------------------------------------- |
-| `VERSION`     | Pin a release             | latest                                 |
-| `INSTALL_DIR` | Where the binary is saved | `/usr/local/bin`, else `~/.local/bin`  |
+You can change what it does with two variables:
+
+| Variable      | What it does              | Default                               |
+| ------------- | ------------------------- | ------------------------------------- |
+| `VERSION`     | Pin a release             | latest                                |
+| `INSTALL_DIR` | Where the binary is saved | `/usr/local/bin`, else `~/.local/bin` |
+
+Set them on `sh`, not on `curl`:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/zdk/kubectl-skyline/main/install.sh | VERSION=v0.1.4 sh
 ```
 
-Or with Homebrew:
+### Other ways to install
+
+**Homebrew**
 
 ```sh
 brew install zdk/tools/kubectl-skyline
 ```
 
-Or with krew, from the latest release manifest:
+**krew**, from the latest release manifest
 
 ```sh
 kubectl krew install --manifest-url https://github.com/zdk/kubectl-skyline/releases/latest/download/skyline.yaml
 ```
 
-Or with Go:
+**Go**
 
 ```sh
 go install github.com/zdk/kubectl-skyline/cmd/kubectl-skyline@latest
