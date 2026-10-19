@@ -34,3 +34,5 @@ jobs:
           git diff --quiet && exit 0
           git commit -am "kubectl-skyline ${GITHUB_REF_NAME#v}"
           git push
+      - name: Update Krew index
+        uses: rajatjindal/krew-release-bot@c970b8a8f6dbc2f2285a26e3ae160903b87002c3 # v0.0.51

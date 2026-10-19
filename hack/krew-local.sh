@@ -4,7 +4,6 @@ cd "$(dirname "$0")/.."
 VERSION="${VERSION:-$(git describe --tags --always --dirty 2>/dev/null | sed 's/^v//')}"
 rm -rf dist && mkdir -p dist
 sha() { shasum -a 256 "$1" | cut -d' ' -f1; }
-manifest=$(cat plugins/skyline.yaml)
 for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
   os=${target%/*} arch=${target#*/}
   bin=kubectl-skyline; [ "$os" = windows ] && bin=kubectl-skyline.exe
@@ -17,11 +16,19 @@ for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 wi
     archive=dist/kubectl-skyline_${os}_${arch}.tar.gz; tar -C "$stage" -czf "$archive" .
   fi
   rm -rf "$stage"
-  manifest=${manifest//SHA_${os}_${arch}/$(sha "$archive")}
   echo "built $archive"
 done
-manifest=${manifest//VERSION/$VERSION}
-printf '%s\n' "$manifest" > dist/skyline.yaml
+# Render .krew.yaml the way krew-release-bot does, using local archives.
+tag='{{ .TagName }}' re='^( *)\{\{ addURIAndSha "([^"]+)" \.TagName \}\}$'
+while IFS= read -r line; do
+  line=${line//"$tag"/v$VERSION}
+  if [[ $line =~ $re ]]; then
+    ind=${BASH_REMATCH[1]} uri=${BASH_REMATCH[2]}
+    printf '%suri: %s\n%ssha256: %s\n' "$ind" "$uri" "$ind" "$(sha "dist/${uri##*/}")"
+  else
+    printf '%s\n' "$line"
+  fi
+done < .krew.yaml > dist/skyline.yaml
 (cd dist && shasum -a 256 kubectl-skyline_* > checksums.txt)
 host_os=$(uname -s | tr '[:upper:]' '[:lower:]'); host_arch=$(uname -m)
 case $host_arch in x86_64) host_arch=amd64;; aarch64|arm64) host_arch=arm64;; esac

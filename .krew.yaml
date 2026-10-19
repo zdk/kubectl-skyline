@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: skyline
 spec:
-  version: "vVERSION"
+  version: {{ .TagName }}
   homepage: https://github.com/zdk/kubectl-skyline
   shortDescription: Explore the cluster as an interactive 3D space
   description: |
@@ -17,32 +17,26 @@ spec:
     nodes, namespaces and events.
   platforms:
     - selector: {matchLabels: {os: linux, arch: amd64}}
-      uri: https://github.com/zdk/kubectl-skyline/releases/download/vVERSION/kubectl-skyline_linux_amd64.tar.gz
-      sha256: SHA_linux_amd64
+      {{ addURIAndSha "https://github.com/zdk/kubectl-skyline/releases/download/{{ .TagName }}/kubectl-skyline_linux_amd64.tar.gz" .TagName }}
       bin: kubectl-skyline
       files: [{from: kubectl-skyline, to: .}, {from: LICENSE, to: .}]
     - selector: {matchLabels: {os: linux, arch: arm64}}
-      uri: https://github.com/zdk/kubectl-skyline/releases/download/vVERSION/kubectl-skyline_linux_arm64.tar.gz
-      sha256: SHA_linux_arm64
+      {{ addURIAndSha "https://github.com/zdk/kubectl-skyline/releases/download/{{ .TagName }}/kubectl-skyline_linux_arm64.tar.gz" .TagName }}
       bin: kubectl-skyline
       files: [{from: kubectl-skyline, to: .}, {from: LICENSE, to: .}]
     - selector: {matchLabels: {os: darwin, arch: amd64}}
-      uri: https://github.com/zdk/kubectl-skyline/releases/download/vVERSION/kubectl-skyline_darwin_amd64.tar.gz
-      sha256: SHA_darwin_amd64
+      {{ addURIAndSha "https://github.com/zdk/kubectl-skyline/releases/download/{{ .TagName }}/kubectl-skyline_darwin_amd64.tar.gz" .TagName }}
       bin: kubectl-skyline
       files: [{from: kubectl-skyline, to: .}, {from: LICENSE, to: .}]
     - selector: {matchLabels: {os: darwin, arch: arm64}}
-      uri: https://github.com/zdk/kubectl-skyline/releases/download/vVERSION/kubectl-skyline_darwin_arm64.tar.gz
-      sha256: SHA_darwin_arm64
+      {{ addURIAndSha "https://github.com/zdk/kubectl-skyline/releases/download/{{ .TagName }}/kubectl-skyline_darwin_arm64.tar.gz" .TagName }}
       bin: kubectl-skyline
       files: [{from: kubectl-skyline, to: .}, {from: LICENSE, to: .}]
     - selector: {matchLabels: {os: windows, arch: amd64}}
-      uri: https://github.com/zdk/kubectl-skyline/releases/download/vVERSION/kubectl-skyline_windows_amd64.zip
-      sha256: SHA_windows_amd64
+      {{ addURIAndSha "https://github.com/zdk/kubectl-skyline/releases/download/{{ .TagName }}/kubectl-skyline_windows_amd64.zip" .TagName }}
       bin: kubectl-skyline.exe
       files: [{from: kubectl-skyline.exe, to: .}, {from: LICENSE, to: .}]
     - selector: {matchLabels: {os: windows, arch: arm64}}
-      uri: https://github.com/zdk/kubectl-skyline/releases/download/vVERSION/kubectl-skyline_windows_arm64.zip
-      sha256: SHA_windows_arm64
+      {{ addURIAndSha "https://github.com/zdk/kubectl-skyline/releases/download/{{ .TagName }}/kubectl-skyline_windows_arm64.zip" .TagName }}
       bin: kubectl-skyline.exe
       files: [{from: kubectl-skyline.exe, to: .}, {from: LICENSE, to: .}]
