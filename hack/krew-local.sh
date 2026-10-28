@@ -19,7 +19,7 @@ for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 wi
   echo "built $archive"
 done
 # Render .krew.yaml the way krew-release-bot does, using local archives.
-tag='{{ .TagName }}' re='^( *)\{\{ addURIAndSha "([^"]+)" \.TagName \}\}$'
+tag='{{ .TagName }}' re='^( *)\{\{ addURIAndSha "([^"]+)" \.TagName( \| indent [0-9]+)? \}\}$'
 while IFS= read -r line; do
   line=${line//"$tag"/v$VERSION}
   if [[ $line =~ $re ]]; then
