@@ -2,7 +2,7 @@ import * as T from "/vendor/three.module.js";
 import { OrbitControls } from "/vendor/OrbitControls.js";
 import { layout, visibleNodes, bounds, SHAPE, TILE_SHAPE, TREE_KINDS, TILE_KINDS } from "./layout.js";
 import {
-  STATUS_COLOR, KIND_COLOR, SHORT, KINDS, hex, nodeHue, hslToHex, age, esc, connect, containerColor, detailURL, statusDots,
+  STATUS_COLOR, KIND_COLOR, SHORT, KINDS, hex, nodeHue, hslToHex, ageHTML, esc, connect, containerColor, detailURL, statusDots,
 } from "./common.js";
 
 const $ = (id) => {
@@ -575,7 +575,7 @@ function showDetails(id) {
   if (!n) return;
   $("d-kind").textContent = "SELECTED " + n.kind.replace(/([a-z])([A-Z])/g, "$1 $2").toUpperCase();
   $("d-name").textContent = n.name;
-  $("d-meta").innerHTML = (n.namespace ? `<a data-id="Namespace//${esc(n.namespace)}">ns ${esc(n.namespace)}</a> · ` : "") + `age ${age(n.created)}` + (n.clusterNode ? ` · <a data-id="Node//${esc(n.clusterNode)}">on ${esc(n.clusterNode)}</a>` : "");
+  $("d-meta").innerHTML = (n.namespace ? `<a data-id="Namespace//${esc(n.namespace)}">ns ${esc(n.namespace)}</a> · ` : "") + `age ${ageHTML(n.created)}` + (n.clusterNode ? ` · <a data-id="Node//${esc(n.clusterNode)}">on ${esc(n.clusterNode)}</a>` : "");
   const ph = $("d-phase"); ph.textContent = n.phase || n.status; ph.className = "pill phase st-" + n.status; ph.style.borderColor = "currentColor";
   $("d-summary").innerHTML = `${statusDots(n)} ${esc(n.summary || "")}`;
   $("d-facts").innerHTML = (n.facts || []).filter(([, v]) => v).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");

@@ -1,4 +1,4 @@
-import { SHORT, esc, age, connect, focusURL, parseId, containerColor, hex, yamlHTML, diffLines, statusDots, execCommandFor } from "./common.js";
+import { SHORT, esc, ageHTML, connect, focusURL, parseId, containerColor, hex, yamlHTML, diffLines, statusDots, execCommandFor } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
 const id = new URLSearchParams(location.search).get("id") || "";
@@ -12,7 +12,7 @@ let logContainer = null, logTimer = null;
 
 function renderNode(n) {
   const ph = $("phase"); ph.textContent = n.phase || n.status; ph.className = "st-" + n.status;
-  $("meta").innerHTML = `${namespace ? `namespace <b>${esc(namespace)}</b> · ` : ""}age ${age(n.created)}${n.clusterNode ? ` · node <b>${esc(n.clusterNode)}</b>` : ""} · uid ${esc(n.uid)}`;
+  $("meta").innerHTML = `${namespace ? `namespace <b>${esc(namespace)}</b> · ` : ""}age ${ageHTML(n.created)}${n.clusterNode ? ` · node <b>${esc(n.clusterNode)}</b>` : ""} · uid ${esc(n.uid)}`;
   $("summary").innerHTML = `${statusDots(n)} ${esc(n.summary || n.phase || n.status)}`;
   $("facts").innerHTML = (n.facts || []).filter(([, v]) => v).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("") +
     Object.entries(n.labels || {}).map(([k, v]) => `<dt class="st-idle">label</dt><dd><code>${esc(k)}=${esc(v)}</code></dd>`).join("");

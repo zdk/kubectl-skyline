@@ -36,6 +36,13 @@ export function age(ts) {
   return `${Math.floor(s / 86400)}d`;
 }
 
+// Fresh pods stand out: under 10m bright and pulsing, under 1h highlighted.
+export function ageHTML(ts) {
+  const m = (Date.now() - new Date(ts).getTime()) / 60000;
+  const cls = m < 10 ? "age-new" : m < 60 ? "age-recent" : "";
+  return cls ? `<span class="${cls}" title="created ${esc(new Date(ts).toLocaleString())}">${age(ts)}</span>` : age(ts);
+}
+
 export function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }

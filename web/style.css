@@ -32,6 +32,9 @@ tr:hover td{background:#07161c}
 td.kind{color:#7fb5ab;white-space:nowrap}
 td.ns{color:#8fb0ac}
 .pill{display:inline-block;padding:1px 7px;border:1px solid;border-radius:2px;font-size:10px;white-space:nowrap}
+.age-recent{color:#e8c58a}
+.age-new{color:#65f6dc;font-weight:bold;text-shadow:0 0 6px currentColor;animation:age-pulse 1.6s ease-in-out infinite}
+@keyframes age-pulse{50%{opacity:.45}}
 .st-ok{color:#4bd6bf}.st-warn{color:#e8b452}.st-error{color:#ff5a6e}.st-done{color:#7fa3a8}.st-idle{color:#4a6a72}.st-unknown{color:#5a7a80}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px;align-items:center}
 .toolbar input[type=search]{width:280px}
