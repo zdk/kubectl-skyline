@@ -46,10 +46,13 @@ jobs:
   krew:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with: { persist-credentials: false }
       # The v0.0.51 action still ships the v0.0.50 image, which ignores the
       # tag input. Run the v0.0.51 image directly; it reads the INPUT_ env.
-      - uses: docker://ghcr.io/rajatjindal/krew-release-bot:v0.0.51
+      - uses: docker://ghcr.io/rajatjindal/krew-release-bot@sha256:a1990089fb0184801af0b0a24931e1537580e97fe9ab79e840582f6c0d37c00c # v0.0.51
         env:
           INPUT_KREW_PLUGIN_RELEASE_TAG: ${{ inputs.tag }}
