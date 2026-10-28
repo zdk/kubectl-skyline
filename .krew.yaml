@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: skyline
 spec:
-  version: {{ .TagName | indent 6 }}
+  version: {{ .TagName }}
   homepage: https://github.com/zdk/kubectl-skyline
   shortDescription: Explore the cluster as an interactive 3D space
   description: |
