@@ -48,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: rajatjindal/krew-release-bot@c970b8a8f6dbc2f2285a26e3ae160903b87002c3 # v0.0.51
-        with:
-          krew_plugin_release_tag: ${{ inputs.tag }}
+      # The v0.0.51 action still ships the v0.0.50 image, which ignores the
+      # tag input. Run the v0.0.51 image directly; it reads the INPUT_ env.
+      - uses: docker://ghcr.io/rajatjindal/krew-release-bot:v0.0.51
+        env:
+          INPUT_KREW_PLUGIN_RELEASE_TAG: ${{ inputs.tag }}
