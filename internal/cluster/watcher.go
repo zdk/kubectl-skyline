@@ -14,6 +14,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -148,6 +149,17 @@ func (w *Watcher) Run(ctx context.Context) error {
 		return err
 	}
 
+	// Clusters before 1.21 only serve batch/v1beta1 CronJobs. Watching a
+	// missing resource never syncs and blocks startup, so skip it instead.
+	cronjobs := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	var cronjobInformer cache.SharedIndexInformer
+	if w.hasResource("batch/v1", "cronjobs") {
+		cronjobInformer = f.Batch().V1().CronJobs().Informer()
+		cronjobs = cronjobInformer.GetIndexer()
+	} else {
+		log.Printf("warning: batch/v1 CronJob not served by this cluster, skipping")
+	}
+
 	all := []cache.SharedIndexInformer{
 		f.Core().V1().Nodes().Informer(),
 		f.Core().V1().Pods().Informer(),
@@ -156,7 +168,6 @@ func (w *Watcher) Run(ctx context.Context) error {
 		f.Apps().V1().StatefulSets().Informer(),
 		f.Apps().V1().DaemonSets().Informer(),
 		f.Batch().V1().Jobs().Informer(),
-		f.Batch().V1().CronJobs().Informer(),
 		f.Core().V1().Services().Informer(),
 		f.Networking().V1().Ingresses().Informer(),
 		cms,
@@ -170,6 +181,9 @@ func (w *Watcher) Run(ctx context.Context) error {
 	}
 	nsInformer := nsFactory.Core().V1().Namespaces().Informer()
 	all = append(all, nsInformer)
+	if cronjobInformer != nil {
+		all = append(all, cronjobInformer)
+	}
 
 	mark := cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(interface{}) { w.markDirty() },
@@ -204,7 +218,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 		statefulsets: f.Apps().V1().StatefulSets().Informer().GetIndexer(),
 		daemonsets:   f.Apps().V1().DaemonSets().Informer().GetIndexer(),
 		jobs:         f.Batch().V1().Jobs().Informer().GetIndexer(),
-		cronjobs:     f.Batch().V1().CronJobs().Informer().GetIndexer(),
+		cronjobs:     cronjobs,
 		services:     f.Core().V1().Services().Informer().GetIndexer(),
 		ingresses:    f.Networking().V1().Ingresses().Informer().GetIndexer(),
 		configmaps:   cms.GetIndexer(),
@@ -251,6 +265,21 @@ func (w *Watcher) Run(ctx context.Context) error {
 			w.rebuild()
 		}
 	}
+}
+
+// hasResource reports whether the API server serves the named resource.
+// Discovery errors count as "yes" so a flaky call does not hide a resource.
+func (w *Watcher) hasResource(groupVersion, name string) bool {
+	list, err := w.client.Discovery().ServerResourcesForGroupVersion(groupVersion)
+	if err != nil {
+		return !apierrors.IsNotFound(err)
+	}
+	for _, r := range list.APIResources {
+		if r.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // keepPrevious remembers the version before the latest change, so the UI can diff it.
